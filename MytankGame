@@ -1,0 +1,205 @@
+package com.class4;
+import javax.swing.*;
+
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.Vector;
+public class MyTankgame4 extends JFrame{
+	Mypanel mp=null;
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		MyTankgame4 mtg=new MyTankgame4();
+	}
+	//构造函数
+	public MyTankgame4(){
+		mp=new Mypanel();
+		Thread t=new Thread(mp);
+		this.add(mp);
+		this.addKeyListener(mp);
+		this.setSize(600,500);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setVisible(true);
+		t.start();
+	}
+}
+
+//我的面板;
+class Mypanel extends JPanel implements Runnable,KeyListener{
+	//in 定义一个坦克
+	Hero hero=null;
+	//定义敌人的坦克组
+		Vector<EnemyTank> ets=new Vector<EnemyTank>();
+		int enSize=3;
+	public Mypanel()
+	{
+		hero=new Hero(100,100);
+		//初始化敌人的坦克
+		for(int i=0;i<enSize;i++){
+			//创建一辆敌人坦克对象
+			EnemyTank et=new EnemyTank((i+1)*50,0);
+			et.setColor(0);	
+			et.setDirect(2);
+			ets.add(et);
+		}
+	}
+	
+	//重写paint函数
+	public void paint(Graphics g){
+		super.paint(g);
+		g.fillRect(0, 0,400,300);
+		//画出我的坦克（到时候封装成一个函数）	
+		this.drawTank(hero.getX(), hero.getY(), g,this.hero.direct,1);
+		//画出子弹
+		//从ss中取出每一颗子弹
+		for(int i=0;i<hero.ss.size();i++){
+		Shot myShot=hero.ss.get(i);
+			if(myShot!=null&&myShot.islive==true){
+			g.draw3DRect(myShot.x, myShot.y, 1,1,false);
+		}if(myShot.islive==false){
+			hero.ss.remove(i);
+		}
+		}
+		//画敌人坦克
+		for(int i=0;i<ets.size();i++){
+			EnemyTank et=ets.get(i);
+			if(et.isLive){
+			this.drawTank(et.getX(),et.getY(), g,et.getDirect(), 0);
+		}
+		}
+	}
+	//判断子弹是否击中
+	public void hitTank(Shot s,EnemyTank et){
+		//判断坦克的方向
+		switch(et.direct){
+		//如果敌人坦克的方向为上或下
+		case 0:
+		case 2:
+			if(s.x>et.x&&s.x<et.x+20&&s.y>et.y&&s.y<et.y+30){
+				//击中
+				//子弹死亡
+				s.islive=false;
+				//敌人坦克死亡
+				et.isLive=false;
+			}
+		case 1:
+		case 3:
+			if(s.x>et.x&&s.x<et.x+30&&s.y>et.y&&s.y<et.y+20){
+				//击中
+			}
+		}
+		
+	}
+	public void drawTank(int x,int y,Graphics g,int direct,int type){
+		switch(type){
+		case 0:
+			g.setColor(Color.cyan);
+			break;
+		case 1:
+			g.setColor(Color.yellow);
+			break;
+		}
+		switch(direct){
+		case 0:			
+			g.fill3DRect(x, y,5, 30,false);
+			g.fill3DRect(x+15 ,y,5,30,false);
+			g.fill3DRect(x+5,y+5, 10,20,false);
+			g.fillOval(x+5, y+10,10, 10);
+			g.drawLine(x+10,y+15,x+10,y);
+			break;
+		case 1:
+			g.fill3DRect(x, y,30, 5,false);
+			g.fill3DRect(x ,y+15,30,5,false);
+			g.fill3DRect(x+5,y+5, 20,10,false);
+			g.fillOval(x+5, y+5,10, 10);
+			g.drawLine(x+15,y+10,x+30,y+10);
+			break;
+		case 2:
+			g.fill3DRect(x, y,5, 30,false);
+			g.fill3DRect(x+15 ,y,5,30,false);
+			g.fill3DRect(x+5,y+5, 10,20,false);
+			g.fillOval(x+5, y+10,10, 10);
+			g.drawLine(x+10,y+15,x+10,y+30);
+			break;
+		case 3:
+			g.fill3DRect(x, y,30, 5,false);
+			g.fill3DRect(x ,y+15,30,5,false);
+			g.fill3DRect(x+5,y+5, 20,10,false);
+			g.fillOval(x+5, y+5,10, 10);
+			g.drawLine(x+15,y+10,x,y+10);
+			break;
+
+		}
+
+	}
+	//a left,s down,d right,w top;
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		if(e.getKeyCode()==KeyEvent.VK_W){
+			//设置我的坦克的方向
+			this.hero.setDirect(0);
+			this.hero.moveUP();
+		}else if(e.getKeyCode()==KeyEvent.VK_D){
+			this.hero.setDirect(1);
+			this.hero.moveRight();
+		}else if(e.getKeyCode()==KeyEvent.VK_S){
+			this.hero.setDirect(2);
+			this.hero.moveDown();
+		}else if(e.getKeyCode()==KeyEvent.VK_A){
+			this.hero.setDirect(3);
+			this.hero.moveLeft();
+		}
+		//判断玩家是否按下了攻击
+		if(e.getKeyCode()==KeyEvent.VK_J){
+			//开火
+			if(this.hero.ss.size()<=4){
+			this.hero.ShotEnemy();
+			}
+		}
+		this.repaint();
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		//每隔100毫秒重画
+		while(true){
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}//判断是否击中
+			for(int i=0;i<hero.ss.size();i++){
+				//取出子弹
+				Shot myShot=hero.ss.get(i);
+				//判断子弹是否有效
+				if(myShot.islive){
+					//取出每个敌人坦克
+					for(int j=0;j<ets.size();j++){
+						//取出坦克
+						EnemyTank et=ets.get(j);
+						if(et.isLive){
+							this.hitTank(myShot, et);
+						}
+					}
+				}
+			}
+			
+			this.repaint();
+		}
+	}
+	
+}
